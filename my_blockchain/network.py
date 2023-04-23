@@ -1,6 +1,7 @@
 # my_blockchain/network.py
 
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 from .customer import Customer
 from .transaction import Transaction
@@ -11,6 +12,7 @@ from .wallet import WalletRegistry
 class Network:
     def __init__(self, port, difficulty=4):
         self.app = Flask(__name__)
+        CORS(self.app)
         self.blockchain = Blockchain(difficulty)
         self.wallet_registry = WalletRegistry()
         self.port = port
