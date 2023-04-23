@@ -24,6 +24,23 @@ class Network:
         self.app.add_url_rule('/chain', 'chain', self.chain, methods=['GET'])
         self.app.add_url_rule('/transactions/new', 'new_transaction', self.new_transaction, methods=['POST'])
         self.app.add_url_rule('/mine', 'mine', self.mine, methods=['POST'])
+        self.app.add_url_rule('/balances', 'balances', self.get_balances, methods=['GET'])
+
+    def get_balances(self):
+        """
+        Get the balances of all customers in the network.
+        """
+        balances = {}
+        for customer in self.wallet_registry.get_customers():
+            wallet_public_key = customer.wallet.public_key
+            balance = self.blockchain.get_balance(wallet_public_key)
+            balances[customer.name] = balance
+
+        response = {
+            'message': 'Balances of all customers',
+            'balances': balances
+        }
+        return jsonify(response), 200
 
     def wallets(self):
         response = {'wallets': str(self.wallet_registry)}

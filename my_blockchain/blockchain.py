@@ -75,3 +75,13 @@ class Blockchain:
                 return False
 
         return True
+
+    def get_balance(self, public_key):
+        balance = 0
+        for block in self.chain:
+            for transaction in block.transactions:
+                if transaction.sender_public_key == public_key:
+                    balance -= transaction.amount
+                if transaction.receiver_public_key == public_key:
+                    balance += transaction.amount
+        return balance
