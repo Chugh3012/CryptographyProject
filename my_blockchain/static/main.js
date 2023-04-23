@@ -1,4 +1,4 @@
-document.getElementById('new-transaction-form').addEventListener('submit', async (e) => {
+document.getElementById('transaction-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const sender = document.getElementById('sender').value;
@@ -65,7 +65,7 @@ async function getChain() {
     const data = await response.json();
     console.log(data)
 
-    const chainContainer = document.getElementById('chain-container');
+    const chainContainer = document.getElementById('blockchain');
     chainContainer.innerHTML = '';
 
     data.chain.forEach((block) => {
