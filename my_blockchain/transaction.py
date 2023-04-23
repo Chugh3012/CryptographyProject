@@ -38,15 +38,9 @@ class Transaction:
         except ecdsa.BadSignatureError:
             return False
 
-    def __repr__(self):
-        """
-        A string representation of the transaction.
-        """
-        return f"Transaction(sender={self.sender_public_key}, receiver={self.receiver_public_key}, amount={self.amount}, signature={self.signature})"
-
-    def to_dict(self):
+    def to_dict(self, wallet_registry):
         return {
-            "sender": self.sender_public_key.to_string().hex(),
-            "recipient": self.receiver_public_key.to_string().hex(),
+            "sender": wallet_registry.get_customer_name_by_public_key(self.sender_public_key),
+            "recipient": wallet_registry.get_customer_name_by_public_key(self.receiver_public_key),
             "amount": self.amount,
         }

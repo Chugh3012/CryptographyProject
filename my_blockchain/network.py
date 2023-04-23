@@ -2,9 +2,10 @@
 
 from flask import Flask, request, jsonify
 
+from .customer import Customer
 from .transaction import Transaction
 from .blockchain import Blockchain
-from .wallet import Wallet, WalletRegistry
+from .wallet import WalletRegistry
 
 
 class Network:
@@ -15,8 +16,8 @@ class Network:
         self.port = port
 
         # Initialise wallet registry
-        for w in range(5):
-            self.wallet_registry.add_wallet(Wallet())
+        for name in ('Alice', 'Bob', 'Carl', 'Dyna', 'Ela'):
+            self.wallet_registry.register_customer(Customer(name))
 
         # Register routes
         self.app.add_url_rule('/wallets', 'wallets', self.wallets, methods=['GET'])
@@ -30,27 +31,28 @@ class Network:
 
     def chain(self):
         response = {
-            'chain': [block.to_dict() for block in self.blockchain.chain],
+            'chain': [block.to_dict(self.wallet_registry) for block in self.blockchain.chain],
             'length': len(self.blockchain.chain)
         }
         return jsonify(response), 200
 
     def new_transaction(self):
         transaction_details = request.form
-        sender_address = transaction_details['sender']
-        recipient_address = transaction_details['recipient']
+        sender_name = transaction_details['sender']
+        recipient_name = transaction_details['recipient']
 
-        sender_public_key = self.wallet_registry.get_public_key_by_address(sender_address)
-        recipient_public_key = self.wallet_registry.get_public_key_by_address(recipient_address)
+        sender = self.wallet_registry.get_customer_by_name(sender_name)
+        recipient = self.wallet_registry.get_customer_by_name(recipient_name)
 
-        sender_wallet = self.wallet_registry.get_wallet_by_address(sender_address)
+        if not sender or not recipient:
+            return jsonify({"error": "Invalid sender or recipient name"}), 400
 
-        if not sender_public_key or not recipient_public_key:
-            return jsonify({"error": "Invalid sender or recipient address"}), 400
+        sender_wallet = sender.wallet
+        recipient_wallet = recipient.wallet
 
         transaction = Transaction(
-            sender_wallet,  # Pass the sender's wallet instead of sender_public_key
-            recipient_public_key,
+            sender_wallet,
+            recipient_wallet.public_key,
             float(transaction_details['amount'])
         )
 
@@ -59,14 +61,15 @@ class Network:
         return jsonify(response), 201
 
     def mine(self):
-        miner_address = request.form['miner_address']
+        miner_name = request.form['miner']
+        miner_customer = self.wallet_registry.get_customer_by_name(miner_name)
 
-        miner_public_key = self.wallet_registry.get_public_key_by_address(miner_address)
+        if not miner_customer:
+            return jsonify({"error": "Invalid miner name"}), 400
 
-        if not miner_public_key:
-            return jsonify({"error": "Invalid miner address"}), 400
+        miner_wallet = miner_customer.wallet
 
-        self.blockchain.mine_pending_transactions(miner_public_key)
+        self.blockchain.mine_pending_transactions(miner_wallet.public_key)
         response = {'message': 'New Block Mined'}
         return jsonify(response), 200
 
